@@ -1,0 +1,17 @@
+chain: regtest
+
+image:
+  repository: bitcoindevproject/bitcoin
+  pullPolicy: IfNotPresent
+  tag: "27.0"
+
+defaultConfig: |
+  regtest=1
+  server=1
+  txindex=1
+  fallbackfee=0.00001
+  deprecatedrpc=create_bdb
+  zmqpubsequence=tcp://0.0.0.0:28332
+  zmqpubsequencehwm=10000
+  debug=mempool
+  debug=rpc
