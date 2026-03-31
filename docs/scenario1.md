@@ -1,4 +1,4 @@
-# Scenario 1 — Raw Transaction Replacement Cycling
+# Scenario 1 -Raw Transaction Replacement Cycling
 
 ## Overview
 
@@ -53,9 +53,9 @@ Scenario 1 demonstrates the replacement cycling attack using only Bitcoin Core n
 
 ### Setup Phase
 
-1. **Alice mines 101 blocks** — coinbase maturity, Alice gets spendable coins
-2. **Alice funds Bob and Mallory** — 10 BTC each, confirmed in a block
-3. **HTLC output created** — Alice funds a 2-of-2 multisig (Bob + Mallory keys) with 1.0 BTC, confirmed
+1. **Alice mines 101 blocks** -coinbase maturity, Alice gets spendable coins
+2. **Alice funds Bob and Mallory** -10 BTC each, confirmed in a block
+3. **HTLC output created** -Alice funds a 2-of-2 multisig (Bob + Mallory keys) with 1.0 BTC, confirmed
 
 At this point:
 - HTLC output is a confirmed UTXO at `htlc_txid:htlc_vout`
@@ -64,38 +64,38 @@ At this point:
 
 ### Attack Cycle (repeated N times)
 
-**Phase 1 — Plant the conflict:**
+**Phase 1 -Plant the conflict:**
 
-4. **Alice creates Box M** — sends 0.1 BTC to a Mallory wallet address, confirms it
-5. **Mallory broadcasts m_child** — spends Box M to herself, fee 1 sat/vB, signals RBF
+4. **Alice creates Box M** -sends 0.1 BTC to a Mallory wallet address, confirms it
+5. **Mallory broadcasts m_child** -spends Box M to herself, fee 1 sat/vB, signals RBF
    - Box M is now "pre-spent" in the mempool
 
-**Phase 2 — Bob's timeout enters:**
+**Phase 2 -Bob's timeout enters:**
 
-6. **Bob broadcasts htlc_timeout** — spends the HTLC output to his address, fee 2 sat/vB, signals RBF
+6. **Bob broadcasts htlc_timeout** -spends the HTLC output to his address, fee 2 sat/vB, signals RBF
    - Mempool now has: m_child + htlc_timeout
 
-**Phase 3 — Mallory replaces:**
+**Phase 3 -Mallory replaces:**
 
-7. **Mallory broadcasts htlc_preimage** — spends TWO inputs:
+7. **Mallory broadcasts htlc_preimage** -spends TWO inputs:
    - Input 0: HTLC output (conflicts with htlc_timeout)
    - Input 1: Box M (conflicts with m_child)
    - Fee: 10+ sat/vB (higher than htlc_timeout + m_child combined)
    - RBF evicts both htlc_timeout and m_child
    - Mempool now has: htlc_preimage only
 
-**Phase 4 — Mallory cycles out her own preimage:**
+**Phase 4 -Mallory cycles out her own preimage:**
 
-8. **Mallory broadcasts cycle_out** — spends Box M only, fee 30+ sat/vB
+8. **Mallory broadcasts cycle_out** -spends Box M only, fee 30+ sat/vB
    - Conflicts with htlc_preimage (both spend Box M)
    - Fee exceeds htlc_preimage's absolute fee
    - RBF evicts htlc_preimage
    - **Mempool now has: cycle_out only. HTLC output is ORPHANED.**
 
-**Phase 5 — Reset:**
+**Phase 5 -Reset:**
 
-9. **Mine a block** — confirms cycle_out, clears mempool
-10. **Bob rebroadcasts** — with incremented nSequence (new txid to bypass p2p filter)
+9. **Mine a block** -confirms cycle_out, clears mempool
+10. **Bob rebroadcasts** -with incremented nSequence (new txid to bypass p2p filter)
 11. Go to Phase 1 with a fresh Box M
 
 ### Resolution Phase
@@ -135,7 +135,7 @@ After N cycles, Mallory broadcasts htlc_preimage one final time **without** broa
 Bitcoin Core 27.0 uses descriptor wallets only (no BDB/legacy wallet support). This affects how we sign the multisig:
 
 - **Multisig keys** are generated in Python using `test_framework.key.ECKey`, converted to WIF format manually
-- **Multisig signing** uses `signrawtransactionwithkey` with explicit WIF private keys and `prevtxs` containing the `redeemScript` — no wallet involvement
+- **Multisig signing** uses `signrawtransactionwithkey` with explicit WIF private keys and `prevtxs` containing the `redeemScript` -no wallet involvement
 - **Single-key signing** (Box M, m_child, cycle_out) uses `signrawtransactionwithwallet` on Mallory's node
 - **nSequence rotation**: Bob's htlc_timeout uses decreasing nSequence values each cycle (0xFFFFFFFD, 0xFFFFFFFC, ...) to change the txid and bypass Bitcoin Core's p2p duplicate transaction filter
 
@@ -143,9 +143,9 @@ Bitcoin Core 27.0 uses descriptor wallets only (no BDB/legacy wallet support). T
 
 **The inbound HTLC (Alice→Bob channel):** In a real Lightning forwarding attack, the payment path is Alice→Bob→Mallory. Bob forwards the HTLC from Alice to Mallory. When Mallory's cycling attack succeeds:
 
-1. Mallory claims the outbound HTLC (Bob→Mallory) via preimage — **modeled in Scenario 1**
-2. The inbound HTLC (Alice→Bob) times out, and Alice reclaims her funds — **NOT modeled**
-3. Bob loses the full routed amount: he paid Mallory but can't recover from Alice — **NOT modeled**
+1. Mallory claims the outbound HTLC (Bob→Mallory) via preimage -**modeled in Scenario 1**
+2. The inbound HTLC (Alice→Bob) times out, and Alice reclaims her funds -**NOT modeled**
+3. Bob loses the full routed amount: he paid Mallory but can't recover from Alice -**NOT modeled**
 
 In Scenario 1, the HTLC output is funded directly by Alice (the miner), not from Bob's balance. Bob's wallet balance stays at 10 BTC throughout. The scenario proves the **cycling mechanics** (eviction, orphaning, final claim) but not the **economic loss path** that requires two channels.
 
